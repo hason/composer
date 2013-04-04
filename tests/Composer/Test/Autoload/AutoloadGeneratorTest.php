@@ -750,6 +750,37 @@ EOF;
         $this->assertContains("require \$baseDir . '/test.php';", file_get_contents($vendorDir.'/composer/autoload_real.php'));
     }
 
+    public function testUpLevelRelativePaths()
+    {
+        $workingDir = $this->workingDir.'/working-dir';
+        mkdir($workingDir, 0777, true);
+        chdir($workingDir);
+
+        $package = new Package('a', '1.0', '1.0');
+        $package->setAutoload(array(
+            'psr-0' => array('Foo' => '../path/../src'),
+            'classmap' => array('../classmap'),
+            'files' => array('../test.php'),
+        ));
+
+        $this->repository->expects($this->once())
+            ->method('getPackages')
+            ->will($this->returnValue(array()));
+
+        $this->fs->ensureDirectoryExists($this->workingDir.'/src/Foo');
+        $this->fs->ensureDirectoryExists($this->workingDir.'/classmap');
+        file_put_contents($this->workingDir.'/src/Foo/Bar.php', '<?php namespace Foo; class Bar {}');
+        file_put_contents($this->workingDir.'/classmap/classes.php', '<?php namespace Foo; class Foo {}');
+        file_put_contents($this->workingDir.'/test.php', '<?php class Foo {}');
+
+        $this->generator->dump($this->config, $this->repository, $package, $this->im, 'composer', true, '_14');
+
+        $this->assertEquals('', file_get_contents($this->vendorDir.'/composer/autoload_namespaces.php'));
+        $this->assertEquals('', file_get_contents($this->vendorDir.'/composer/autoload_classmap.php'));
+        $this->assertContains("require \$vendorDir . '/b/b/bootstrap.php';", file_get_contents($vendorDir.'/composer/autoload_real.php'));
+        $this->assertContains("require \$baseDir . '/test.php';", file_get_contents($vendorDir.'/composer/autoload_real.php'));
+    }
+
     private function assertAutoloadFiles($name, $dir, $type = 'namespaces')
     {
         $a = __DIR__.'/Fixtures/autoload_'.$name.'.php';
