@@ -235,19 +235,22 @@ class Filesystem
      * @param  string $from
      * @param  string $to
      * @param  bool   $directories if true, the source/target are considered to be directories
+     * @param  bool   $directories if true, the source/target are considered to be directories
      * @return string
      */
-    public function findShortestPathCode($from, $to, $directories = false)
+    public function findShortestPathCode($from, $to, $directories = false, $compability52 = false)
     {
         if (!$this->isAbsolutePath($from) || !$this->isAbsolutePath($to)) {
             throw new \InvalidArgumentException(sprintf('$from (%s) and $to (%s) must be absolute paths.', $from, $to));
         }
 
+        $dirCode = $compability52 ? 'dirname(__FILE__)' : '__DIR__';
+
         $from = lcfirst($this->normalizePath($from));
         $to = lcfirst($this->normalizePath($to));
 
         if ($from === $to) {
-            return $directories ? '__DIR__' : '__FILE__';
+            return $directories ? $dirCode : '__FILE__';
         }
 
         $commonPath = $to;
@@ -261,10 +264,10 @@ class Filesystem
 
         $commonPath = rtrim($commonPath, '/') . '/';
         if (strpos($to, $from.'/') === 0) {
-            return '__DIR__ . '.var_export(substr($to, strlen($from)), true);
+            return $dirCode.' . '.var_export(substr($to, strlen($from)), true);
         }
         $sourcePathDepth = substr_count(substr($from, strlen($commonPath)), '/') + $directories;
-        $commonPathCode = str_repeat('dirname(', $sourcePathDepth).'__DIR__'.str_repeat(')', $sourcePathDepth);
+        $commonPathCode = str_repeat('dirname(', $sourcePathDepth).$dirCode.str_repeat(')', $sourcePathDepth);
         $relTarget = substr($to, strlen($commonPath));
 
         return $commonPathCode . (strlen($relTarget) ? '.' . var_export('/' . $relTarget, true) : '');
