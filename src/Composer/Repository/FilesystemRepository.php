@@ -24,7 +24,7 @@ use Composer\Package\Dumper\ArrayDumper;
  */
 class FilesystemRepository extends WritableArrayRepository
 {
-    private $file;
+    protected $file;
 
     /**
      * Initializes filesystem repository.
@@ -34,6 +34,27 @@ class FilesystemRepository extends WritableArrayRepository
     public function __construct(JsonFile $repositoryFile)
     {
         $this->file = $repositoryFile;
+    }
+
+    public function reload()
+    {
+        $this->packages = null;
+        $this->initialize();
+    }
+
+    /**
+     * Writes writable repository.
+     */
+    public function write()
+    {
+        $data = array();
+        $dumper = new ArrayDumper();
+
+        foreach ($this->getCanonicalPackages() as $package) {
+            $data[] = $dumper->dump($package);
+        }
+
+        $this->file->write($data);
     }
 
     /**
@@ -57,31 +78,15 @@ class FilesystemRepository extends WritableArrayRepository
             throw new InvalidRepositoryException('Invalid repository data in '.$this->file->getPath().', packages could not be loaded: ['.get_class($e).'] '.$e->getMessage());
         }
 
+        $this->loadPackages($packages);
+    }
+
+    protected function loadPackages($packages)
+    {
         $loader = new ArrayLoader();
         foreach ($packages as $packageData) {
             $package = $loader->load($packageData);
             $this->addPackage($package);
         }
-    }
-
-    public function reload()
-    {
-        $this->packages = null;
-        $this->initialize();
-    }
-
-    /**
-     * Writes writable repository.
-     */
-    public function write()
-    {
-        $data = array();
-        $dumper = new ArrayDumper();
-
-        foreach ($this->getCanonicalPackages() as $package) {
-            $data[] = $dumper->dump($package);
-        }
-
-        $this->file->write($data);
     }
 }
