@@ -228,13 +228,13 @@ class PluginManager
                 self::$classCounter++;
             }
 
-            if ($oldInstallerPlugin) {
+            /*if ($oldInstallerPlugin) {
                 $installer = new $class($this->io, $this->composer);
                 $this->composer->getInstallationManager()->addInstaller($installer);
             } else {
                 $plugin = new $class();
                 $this->addPlugin($plugin);
-            }
+            }*/
         }
     }
 

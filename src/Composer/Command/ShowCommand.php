@@ -215,7 +215,7 @@ EOT
                         }
 
                         if ($writePath) {
-                            $path = strtok(realpath($composer->getInstallationManager()->getInstallPath($package)), "\r\n");
+                            $path = strtok($composer->getInstallationManager()->getInstallPath($package), "\r\n");
                             $output->write(' ' . $path);
                         }
                     } else {
